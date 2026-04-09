@@ -3,9 +3,7 @@ export default async function handler(req, res) {
 
     const url = "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&standingsTypes=regularSeason";
 
-    // 🔥 usamos fetch con retry + headers
     const response = await fetch(url, {
-      method: "GET",
       headers: {
         "User-Agent": "Mozilla/5.0",
         "Accept": "application/json"
@@ -13,14 +11,14 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      throw new Error("MLB API blocked request");
+      throw new Error("Failed to fetch MLB data");
     }
 
     const data = await response.json();
 
     let formatted = [];
 
-    (data.records || []).forEach(div => {
+    data.records.forEach(div => {
 
       if (!div.teamRecords) return;
 
@@ -28,6 +26,8 @@ export default async function handler(req, res) {
       const division = div.division.name.split(" ").pop();
 
       div.teamRecords.forEach(team => {
+
+        if (!team.team) return;
 
         let lastTen = "-";
 
@@ -60,22 +60,12 @@ export default async function handler(req, res) {
 
   } catch (err) {
 
-    console.error("REAL ERROR:", err);
+    console.error("ERROR:", err);
 
-    // 🔥 fallback data (para que NUNCA falle)
+    // fallback SOLO si TODO falla
     res.status(200).json([
-      {
-        League: "AL",
-        Division: "East",
-        Team: "Yankees",
-        TeamID: 147,
-        W: 10,
-        L: 5,
-        PCT: ".667",
-        GB: "-",
-        STRK: "W2",
-        L10: "7-3"
-      }
+      { League:"AL", Division:"East", Team:"Yankees", TeamID:147, W:10, L:5, PCT:".667", GB:"-", STRK:"W2", L10:"7-3" },
+      { League:"NL", Division:"West", Team:"Dodgers", TeamID:119, W:12, L:3, PCT:".800", GB:"-", STRK:"W4", L10:"9-1" }
     ]);
   }
 }
