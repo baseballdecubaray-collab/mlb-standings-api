@@ -1,10 +1,20 @@
 export default async function handler(req, res) {
   try {
+
     const response = await fetch(
-      "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&standingsTypes=regularSeason"
+      "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&standingsTypes=regularSeason",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0"
+        }
+      }
     );
 
     const data = await response.json();
+
+    if (!data.records) {
+      return res.status(200).json([]);
+    }
 
     let formatted = [];
 
@@ -47,6 +57,7 @@ export default async function handler(req, res) {
     res.status(200).json(formatted);
 
   } catch (err) {
+    console.error("FETCH ERROR:", err);
     res.status(500).json({ error: "Failed to fetch standings" });
   }
 }
